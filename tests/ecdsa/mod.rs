@@ -31,6 +31,20 @@ fn round_trip_sign_verification_pk8() {
     assert!(is_valid);
 }
 
+#[test]
+#[wasm_bindgen_test]
+fn round_trip_sign_verification_spki_der() {
+    let privkey = include_bytes!("private_ecdsa_key.pk8");
+    let pubkey = include_bytes!("public_ecdsa_key.spki");
+
+    let encrypted =
+        sign(b"hello world", &EncodingKey::from_ec_der(privkey), Algorithm::ES256).unwrap();
+    let is_valid =
+        verify(&encrypted, b"hello world", &DecodingKey::from_ec_der(pubkey), Algorithm::ES256)
+            .unwrap();
+    assert!(is_valid);
+}
+
 #[cfg(feature = "use_pem")]
 #[test]
 #[wasm_bindgen_test]

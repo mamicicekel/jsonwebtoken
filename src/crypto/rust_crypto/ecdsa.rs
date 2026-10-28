@@ -8,7 +8,7 @@ use crate::{Algorithm, DecodingKey, EncodingKey};
 use p256::ecdsa::{
     Signature as Signature256, SigningKey as SigningKey256, VerifyingKey as VerifyingKey256,
 };
-use p256::pkcs8::DecodePrivateKey;
+use p256::pkcs8::{DecodePrivateKey, DecodePublicKey};
 use p384::ecdsa::{
     Signature as Signature384, SigningKey as SigningKey384, VerifyingKey as VerifyingKey384,
 };
@@ -56,10 +56,14 @@ macro_rules! define_ecdsa_verifier {
                     return Err(new_error(ErrorKind::InvalidKeyFormat));
                 }
 
-                Ok(Self(
-                    <$verifying_key>::from_sec1_bytes(decoding_key.try_get_as_bytes()?)
+                let bytes = decoding_key.try_get_as_bytes()?;
+                // SPKI DER (`from_ec_der` / `from_ec_pem`) with SEC1 uncompressed-point fallback.
+                let key = match <$verifying_key>::from_public_key_der(bytes) {
+                    Ok(key) => key,
+                    Err(_) => <$verifying_key>::from_sec1_bytes(bytes)
                         .map_err(|_| ErrorKind::InvalidEcdsaKey)?,
-                ))
+                };
+                Ok(Self(key))
             }
         }
 
