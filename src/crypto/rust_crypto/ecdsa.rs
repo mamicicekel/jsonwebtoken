@@ -56,14 +56,10 @@ macro_rules! define_ecdsa_verifier {
                     return Err(new_error(ErrorKind::InvalidKeyFormat));
                 }
 
-                let bytes = decoding_key.try_get_as_bytes()?;
-                // SPKI DER (`from_ec_der` / `from_ec_pem`) with SEC1 uncompressed-point fallback.
-                let key = match <$verifying_key>::from_public_key_der(bytes) {
-                    Ok(key) => key,
-                    Err(_) => <$verifying_key>::from_sec1_bytes(bytes)
+                Ok(Self(
+                    <$verifying_key>::from_public_key_der(decoding_key.try_get_as_bytes()?)
                         .map_err(|_| ErrorKind::InvalidEcdsaKey)?,
-                };
-                Ok(Self(key))
+                ))
             }
         }
 
